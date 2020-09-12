@@ -68,7 +68,7 @@ export class TokenRatesController extends BaseController<TokenRatesConfig, Token
   private tokenList: Token[] = [];
 
   private getPricingURL(query: string) {
-    return `https://api.coingecko.com/api/v3/simple/token_price/ethereum?${query}`;
+    return `https://api.coingecko.com/api/v3/simple/token_price/ubiq?${query}`;
   }
 
   /**
@@ -92,7 +92,7 @@ export class TokenRatesController extends BaseController<TokenRatesConfig, Token
     this.defaultConfig = {
       disabled: true,
       interval: 180000,
-      nativeCurrency: 'eth',
+      nativeCurrency: 'ubq',
       tokens: [],
     };
     this.defaultState = { contractExchangeRates: {} };

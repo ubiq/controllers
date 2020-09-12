@@ -48,17 +48,17 @@ export function fractionBN(targetBN: any, numerator: number | string, denominato
 }
 
 /**
- * Return a URL that can be used to obtain ETH for a given network
+ * Return a URL that can be used to obtain UBQ for a given network
  *
  * @param networkCode - Network code of desired network
- * @param address - Address to deposit obtained ETH
- * @param amount - How much ETH is desired
- * @returns - URL to buy ETH based on network
+ * @param address - Address to deposit obtained UBQ
+ * @param amount - How much UBQ is desired
+ * @returns - URL to buy UBQ based on network
  */
 export function getBuyURL(networkCode = '1', address?: string, amount = 5) {
   switch (networkCode) {
     case '1':
-      return `https://buy.coinbase.com/?code=9ec56d01-7e81-5017-930c-513daa27bb6a&amount=${amount}&address=${address}&crypto_currency=ETH`;
+      return `https://buy.coinbase.com/?code=9ec56d01-7e81-5017-930c-513daa27bb6a&amount=${amount}&address=${address}&crypto_currency=UBQ`;
     case '3':
       return 'https://faucet.metamask.io/';
     case '4':
@@ -71,7 +71,7 @@ export function getBuyURL(networkCode = '1', address?: string, amount = 5) {
 }
 
 /**
- * Return a URL that can be used to fetch ETH transactions
+ * Return a URL that can be used to fetch UBQ transactions
  *
  * @param networkType - Network type of desired network
  * @param address - Address to get the transactions from
@@ -127,7 +127,7 @@ export function getAlethioApiUrl(networkType: string, address: string, opt?: Fet
  * @param networkType - Network type of desired network
  * @param address - Address to get the transactions from
  * @param opt? - Object that can contain fromBlock and Alethio service API key
- * @returns - Responses for both ETH and ERC20 token transactions
+ * @returns - Responses for both UBQ and ERC20 token transactions
  */
 export async function handleTransactionFetch(
   networkType: string,

@@ -75,7 +75,7 @@ The ComposableController can be used to compose multiple controllers together in
 import CurrencyRateController from '@metamask/controllers';
 ```
 
-The CurrencyRateController passively polls for an ETH-to-fiat exchange rate based on a chosen currency.
+The CurrencyRateController passively polls for an UBQ-to-fiat exchange rate based on a chosen currency.
 
 ### KeyringController
 

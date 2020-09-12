@@ -19,7 +19,7 @@ describe('CurrencyRateController', () => {
       conversionDate: 0,
       conversionRate: 0,
       currentCurrency: 'usd',
-      nativeCurrency: 'ETH',
+      nativeCurrency: 'UBQ',
     });
   });
 
@@ -29,7 +29,7 @@ describe('CurrencyRateController', () => {
       currentCurrency: 'usd',
       disabled: false,
       interval: 180000,
-      nativeCurrency: 'ETH',
+      nativeCurrency: 'UBQ',
     });
   });
 
@@ -40,7 +40,7 @@ describe('CurrencyRateController', () => {
       currentCurrency: 'rep',
       disabled: false,
       interval: 180000,
-      nativeCurrency: 'ETH',
+      nativeCurrency: 'UBQ',
     });
   });
 
