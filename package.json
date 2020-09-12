@@ -1,6 +1,6 @@
 {
-  "name": "@metamask/controllers",
-  "version": "3.0.0",
+  "name": "sparrow-controllers",
+  "version": "3.0.1",
   "description": "Collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets",
   "license": "MIT",
   "files": [
@@ -21,17 +21,17 @@
     "build:link": "yarn build && cd dist && yarn link && rm -rf node_modules && cd ..",
     "doc": "typedoc src/ && touch docs/.nojekyll"
   },
-  "homepage": "https://github.com/MetaMask/controllers#readme",
+  "homepage": "https://github.com/ubiq/sparrow-controllers#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MetaMask/controllers.git"
+    "url": "git+https://github.com/ubiq/sparrow-controllers.git"
   },
   "keywords": [
-    "MetaMask",
-    "Ethereum"
+    "Sparrow",
+    "Ubiq"
   ],
   "bugs": {
-    "url": "https://github.com/MetaMask/controllers/issues"
+    "url": "https://github.com/ubiq/sparrow-controllers/issues"
   },
   "dependencies": {
     "await-semaphore": "^0.1.3",
