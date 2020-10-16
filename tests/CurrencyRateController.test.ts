@@ -5,13 +5,12 @@ import CurrencyRateController from '../src/assets/CurrencyRateController';
 
 describe('CurrencyRateController', () => {
   beforeEach(() => {
-    fetchMock
-      .reset()
-      .mock('*', () => new Response(JSON.stringify({ USD: 1337 })))
-      .spy();
+    fetchMock.mock('*', () => new Response(JSON.stringify({ USD: 1337 }))).spy();
   });
 
-  afterEach(fetchMock.reset);
+  afterEach(() => {
+    fetchMock.reset();
+  });
 
   it('should set default state', () => {
     const controller = new CurrencyRateController();
