@@ -625,11 +625,6 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@metamask/contract-metadata@^1.19.0":
-  version "1.19.0"
-  resolved "https://registry.yarnpkg.com/@metamask/contract-metadata/-/contract-metadata-1.19.0.tgz#2f074bce7ab7ffd0d20e3905b1936da0749a0473"
-  integrity sha512-TklMuz7ZbFJ2Zc6C7I+9qL3J9J+4prs5Ok5MJzoxD/57Iq6espzArhpI275elVCFF9ci8IMvach1kH8+F04/hA==
-
 "@metamask/eslint-config@^3.0.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@metamask/eslint-config/-/eslint-config-3.2.0.tgz#66b9b2bea1616821506501e76de4ac991f34914f"
@@ -2734,7 +2729,7 @@ ethereumjs-vm@^2.3.4:
     rustbn.js "~0.2.0"
     safe-buffer "^5.1.1"
 
-ethereumjs-wallet@^0.6.0, ethereumjs-wallet@^0.6.4:
+ethereumjs-wallet@^0.6.0, ethereumjs-wallet@^0.6.5:
   version "0.6.5"
   resolved "https://registry.yarnpkg.com/ethereumjs-wallet/-/ethereumjs-wallet-0.6.5.tgz#685e9091645cee230ad125c007658833991ed474"
   integrity sha512-MDwjwB9VQVnpp/Dc1XzA6J1a3wgHQ4hSvA1uWNatdpOrtCbPVuQSKSyRnjLvS0a+KKMw2pvQ9Ybqpb3+eW8oNA==
@@ -7021,6 +7016,11 @@ typescript@^4.0.3:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.0.3.tgz#153bbd468ef07725c1df9c77e8b453f8d36abba5"
   integrity sha512-tEu6DGxGgRJPb/mVPIZ48e69xCn2yRmCgYmDugAVwmJ6o+0u1RI18eO7E7WBTLYLaEVVOhwQmcdhQHweux/WPg==
+
+ubq-contract-metadata@^1.15.4:
+  version "1.15.4"
+  resolved "https://registry.yarnpkg.com/ubq-contract-metadata/-/ubq-contract-metadata-1.15.4.tgz#d1910c3f0ddfda15f052efb0faca647fd1f8f277"
+  integrity sha512-IMgP5IBRo/BcG+j2bA1c6OGTLkq5McTbgBVHi6knjStR5GEG+kMzWSBI4B1ZdlrndLpzR5dJtwpFm9hscL9UNA==
 
 uglify-js@^3.1.4:
   version "3.6.5"
