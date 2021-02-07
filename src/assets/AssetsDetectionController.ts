@@ -8,7 +8,7 @@ import { Token } from './TokenRatesController';
 
 import AssetsController from './AssetsController';
 
-const contractMap = require('@metamask/contract-metadata');
+const contractMap = require('ubq-contract-metadata');
 
 const DEFAULT_INTERVAL = 180000;
 const MAINNET = 'mainnet';
