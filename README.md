@@ -1,4 +1,6 @@
-`sparrow-controllers` is a collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets.
+# `sparrow-controllers`
+
+A collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets.
 
 ## Table of Contents
 
@@ -16,23 +18,23 @@
 
 ## Usage
 
-1. Install the package.
+First, install the package.
 
-```
+```sh
 yarn add sparrow-controllers
 ```
 
-2. Compose stores to create a data model.
+Then, compose stores to create a data model.
 
 ```js
 import {
   ComposableController,
-  NetworkStatusController,
-  TokenRatesController
+  NetworkController,
+  TokenRatesController,
 } from 'sparrow-controllers';
 
 const datamodel = new ComposableController([
-  new NetworkStatusController(),
+  new NetworkController(),
   new TokenRatesController()
 ]);
 
@@ -90,14 +92,6 @@ import NetworkController from 'sparrow-controllers';
 ```
 
 The NetworkController is responsible for creating an underlying provider and for refreshing its configuration.
-
-### NetworkStatusController
-
-```ts
-import NetworkStatusController from 'sparrow-controllers';
-```
-
-The NetworkStatusController passively polls for the status of available provider networks. The Infura network is supported by default.
 
 ### PhishingController
 
@@ -228,12 +222,12 @@ The ComposableController is initialized by passing an array of controller instan
 ```ts
 import {
   ComposableController,
-  NetworkStatusController,
+  NetworkController,
   TokenRatesController
 } from 'sparrow-controllers';
 
 const datamodel = new ComposableController([
-  new NetworkStatusController(),
+  new NetworkController(),
   new TokenRatesController()
 ]);
 ```
@@ -257,21 +251,21 @@ console.log(datamodel.flatState); // {infura: {...}, contractExchangeRates: [...
 
 Linking `sparrow-controllers` into other projects involves a special NPM command to ensure that dependencies are not duplicated. This is because `sparrow-controllers` ships modules that are transpiled but not bundled, and [NPM does not deduplicate](https://github.com/npm/npm/issues/7742) linked dependency trees.
 
-1. Link `sparrow-controllers`.
+First, link `sparrow-controllers`.
 
-  ```sh
-  $ yarn build:link
-  # or
-  $ npm run build:link
-  ```
+```sh
+$ yarn build:link
+# or
+$ npm run build:link
+```
 
-2. Link into other projects.
+Then, link into other projects.
 
-  ```sh
-  $ yarn link sparrow-controllers
-  # or
-  $ npm link sparrow-controllers
-  ```
+```sh
+$ yarn link sparrow-controllers
+# or
+$ npm link sparrow-controllers
+```
 
 ## Release & Publishing
 
