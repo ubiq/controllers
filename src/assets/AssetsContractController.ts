@@ -1,22 +1,21 @@
-import BaseController, { BaseConfig, BaseState } from '../BaseController';
+import { BN } from 'ethereumjs-util';
+import Web3 from 'web3';
+import abiSingleCallBalancesContract from 'single-call-balance-checker-abi';
+import { BaseController, BaseConfig, BaseState } from '../BaseController';
+import { ERC721Standard } from './Standards/CollectibleStandards/ERC721/ERC721Standard';
+import { ERC1155Standard } from './Standards/CollectibleStandards/ERC1155/ERC1155Standard';
+import { ERC20Standard } from './Standards/ERC20Standard';
 
-// TODO: Destructuring this line introduces a compilation error
-// eslint-disable-next-line prefer-destructuring
-const BN = require('ethereumjs-util').BN;
-const Web3 = require('web3');
-const abiERC20 = require('human-standard-token-abi');
-const abiERC721 = require('human-standard-collectible-abi');
-const abiSingleCallBalancesContract = require('single-call-balance-checker-abi');
+const SINGLE_CALL_BALANCES_ADDRESS =
+  '0xb1f8e55c7f64d203c1400b9d8555d050f94adf39';
 
-const ERC721METADATA_INTERFACE_ID = '0x5b5e139f';
-const ERC721ENUMERABLE_INTERFACE_ID = '0x780e9d63';
-const SINGLE_CALL_BALANCES_ADDRESS = '0xb1f8e55c7f64d203c1400b9d8555d050f94adf39';
+const MISSING_PROVIDER_ERROR =
+  'AssetsContractController failed to set the provider correctly. A provider must be set for this method to be available';
 
 /**
  * @type AssetsContractConfig
  *
  * Assets Contract controller configuration
- *
  * @property provider - Provider used to create a new web3 instance
  */
 export interface AssetsContractConfig extends BaseConfig {
@@ -27,40 +26,26 @@ export interface AssetsContractConfig extends BaseConfig {
  * @type BalanceMap
  *
  * Key value object containing the balance for each tokenAddress
- *
  * @property [tokenAddress] - Address of the token
  */
 export interface BalanceMap {
-  [tokenAddress: string]: string;
+  [tokenAddress: string]: BN;
 }
 
 /**
  * Controller that interacts with contracts on mainnet through web3
  */
-export class AssetsContractController extends BaseController<AssetsContractConfig, BaseState> {
+export class AssetsContractController extends BaseController<
+  AssetsContractConfig,
+  BaseState
+> {
   private web3: any;
 
-  /**
-   *
-   * Query if a contract implements an interface
-   *
-   * @param address - Asset contract address
-   * @param interfaceId - Interface identifier
-   * @returns - Promise resolving to whether the contract implements `interfaceID`
-   */
-  private async contractSupportsInterface(address: string, interfaceId: string): Promise<boolean> {
-    const contract = this.web3.eth.contract(abiERC721).at(address);
-    return new Promise<boolean>((resolve, reject) => {
-      contract.supportsInterface(interfaceId, (error: Error, result: boolean) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(result);
-      });
-    });
-  }
+  private erc721Standard?: ERC721Standard;
+
+  private erc1155Standard?: ERC1155Standard;
+
+  private erc20Standard?: ERC20Standard;
 
   /**
    * Name of this controller used during composition
@@ -68,12 +53,15 @@ export class AssetsContractController extends BaseController<AssetsContractConfi
   name = 'AssetsContractController';
 
   /**
-   * Creates a AssetsContractController instance
+   * Creates a AssetsContractController instance.
    *
-   * @param config - Initial options used to configure this controller
-   * @param state - Initial state to set on this controller
+   * @param config - Initial options used to configure this controller.
+   * @param state - Initial state to set on this controller.
    */
-  constructor(config?: Partial<AssetsContractConfig>, state?: Partial<BaseState>) {
+  constructor(
+    config?: Partial<AssetsContractConfig>,
+    state?: Partial<BaseState>,
+  ) {
     super(config, state);
     this.defaultConfig = {
       provider: undefined,
@@ -82,206 +70,293 @@ export class AssetsContractController extends BaseController<AssetsContractConfi
   }
 
   /**
-   * Sets a new provider
+   * Sets a new provider.
+   *
+   * TODO: Replace this wth a method.
    *
    * @property provider - Provider used to create a new underlying Web3 instance
    */
   set provider(provider: any) {
     this.web3 = new Web3(provider);
+    this.erc721Standard = new ERC721Standard(this.web3);
+    this.erc1155Standard = new ERC1155Standard(this.web3);
+    this.erc20Standard = new ERC20Standard(this.web3);
+  }
+
+  get provider() {
+    throw new Error('Property only used for setting');
   }
 
   /**
-   * Query if contract implements ERC721Metadata interface
+   * Get balance or count for current account on specific asset contract.
    *
-   * @param address - ERC721 asset contract address
-   * @returns - Promise resolving to whether the contract implements ERC721Metadata interface
+   * @param address - Asset ERC20 contract address.
+   * @param selectedAddress - Current account public address.
+   * @returns Promise resolving to BN object containing balance for current account on specific asset contract.
    */
-  async contractSupportsMetadataInterface(address: string): Promise<boolean> {
-    return this.contractSupportsInterface(address, ERC721METADATA_INTERFACE_ID);
+  async getERC20BalanceOf(
+    address: string,
+    selectedAddress: string,
+  ): Promise<BN> {
+    if (!this.erc20Standard) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return this.erc20Standard.getBalanceOf(address, selectedAddress);
   }
 
   /**
-   * Query if contract implements ERC721Enumerable interface
+   * Query for the decimals for a given ERC20 asset.
    *
-   * @param address - ERC721 asset contract address
-   * @returns - Promise resolving to whether the contract implements ERC721Enumerable interface
+   * @param address - ERC20 asset contract address.
+   * @returns Promise resolving to the 'decimals'.
    */
-  async contractSupportsEnumerableInterface(address: string): Promise<boolean> {
-    return this.contractSupportsInterface(address, ERC721ENUMERABLE_INTERFACE_ID);
+  async getERC20TokenDecimals(address: string): Promise<string> {
+    if (this.erc20Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return await this.erc20Standard.getTokenDecimals(address);
   }
 
   /**
-   * Get balance or count for current account on specific asset contract
+   * Enumerate assets assigned to an owner.
    *
-   * @param address - Asset contract address
-   * @param selectedAddress - Current account public address
-   * @returns - Promise resolving to BN object containing balance for current account on specific asset contract
+   * @param address - ERC721 asset contract address.
+   * @param selectedAddress - Current account public address.
+   * @param index - A collectible counter less than `balanceOf(selectedAddress)`.
+   * @returns Promise resolving to token identifier for the 'index'th asset assigned to 'selectedAddress'.
    */
-  async getBalanceOf(address: string, selectedAddress: string): Promise<typeof BN> {
-    const contract = this.web3.eth.contract(abiERC20).at(address);
-    return new Promise<typeof BN>((resolve, reject) => {
-      contract.balanceOf(selectedAddress, (error: Error, result: typeof BN) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(result);
-      });
-    });
+  getERC721CollectibleTokenId(
+    address: string,
+    selectedAddress: string,
+    index: number,
+  ): Promise<string> {
+    if (this.erc721Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return this.erc721Standard.getCollectibleTokenId(
+      address,
+      selectedAddress,
+      index,
+    );
   }
 
   /**
-   * Enumerate assets assigned to an owner
+   * Enumerate assets assigned to an owner.
    *
-   * @param address - ERC721 asset contract address
-   * @param selectedAddress - Current account public address
-   * @param index - A collectible counter less than `balanceOf(selectedAddress)`
-   * @returns - Promise resolving to token identifier for the 'index'th asset assigned to 'selectedAddress'
+   * @param tokenAddress - ERC721 asset contract address.
+   * @param userAddress - Current account public address.
+   * @param tokenId - ERC721 asset identifier.
+   * @returns Promise resolving to an object containing the token standard and a set of details which depend on which standard the token supports.
    */
-  getCollectibleTokenId(address: string, selectedAddress: string, index: number): Promise<number> {
-    const contract = this.web3.eth.contract(abiERC721).at(address);
-    return new Promise<number>((resolve, reject) => {
-      contract.tokenOfOwnerByIndex(selectedAddress, index, (error: Error, result: typeof BN) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(result.toNumber());
-      });
-    });
+  async getTokenStandardAndDetails(
+    tokenAddress: string,
+    userAddress: string,
+    tokenId?: string,
+  ): Promise<{
+    standard: string;
+    tokenURI?: string | undefined;
+    symbol?: string | undefined;
+    name?: string | undefined;
+    decimals?: string | undefined;
+    balance?: BN | undefined;
+  }> {
+    if (
+      this.erc721Standard === undefined ||
+      this.erc1155Standard === undefined ||
+      this.erc20Standard === undefined
+    ) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+
+    // ERC721
+    try {
+      return {
+        ...(await this.erc721Standard.getDetails(tokenAddress, tokenId)),
+      };
+    } catch {
+      // Ignore
+    }
+
+    // ERC1155
+    try {
+      return {
+        ...(await this.erc1155Standard.getDetails(tokenAddress, tokenId)),
+      };
+    } catch {
+      // Ignore
+    }
+
+    // ERC20
+    try {
+      return {
+        ...(await this.erc20Standard.getDetails(tokenAddress, userAddress)),
+      };
+    } catch {
+      // Ignore
+    }
+
+    throw new Error('Unable to determine contract standard');
   }
 
   /**
-   * Query for tokenURI for a given asset
+   * Query for tokenURI for a given ERC721 asset.
    *
-   * @param address - ERC721 asset contract address
-   * @param tokenId - ERC721 asset identifier
-   * @returns - Promise resolving to the 'tokenURI'
+   * @param address - ERC721 asset contract address.
+   * @param tokenId - ERC721 asset identifier.
+   * @returns Promise resolving to the 'tokenURI'.
    */
-  async getCollectibleTokenURI(address: string, tokenId: number): Promise<string> {
-    const contract = this.web3.eth.contract(abiERC721).at(address);
-    return new Promise<string>((resolve, reject) => {
-      contract.tokenURI(tokenId, (error: Error, result: string) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(result);
-      });
-    });
+  async getERC721TokenURI(address: string, tokenId: string): Promise<string> {
+    if (this.erc721Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return this.erc721Standard.getTokenURI(address, tokenId);
   }
 
   /**
-   * Query for name for a given ERC20 asset
+   * Query for name for a given asset.
    *
-   * @param address - ERC20 asset contract address
-   * @returns - Promise resolving to the 'decimals'
+   * @param address - ERC721 or ERC20 asset contract address.
+   * @returns Promise resolving to the 'name'.
    */
-  async getTokenDecimals(address: string): Promise<string> {
-    const contract = this.web3.eth.contract(abiERC20).at(address);
-    return new Promise<string>((resolve, reject) => {
-      contract.decimals((error: Error, result: string) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(result);
-      });
-    });
+  async getERC721AssetName(address: string): Promise<string> {
+    if (this.erc721Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return this.erc721Standard.getAssetName(address);
   }
 
   /**
-   * Query for name for a given asset
+   * Query for symbol for a given asset.
    *
-   * @param address - ERC721 or ERC20 asset contract address
-   * @returns - Promise resolving to the 'name'
+   * @param address - ERC721 or ERC20 asset contract address.
+   * @returns Promise resolving to the 'symbol'.
    */
-  async getAssetName(address: string): Promise<string> {
-    const contract = this.web3.eth.contract(abiERC721).at(address);
-    return new Promise<string>((resolve, reject) => {
-      contract.name((error: Error, result: string) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(result);
-      });
-    });
+  async getERC721AssetSymbol(address: string): Promise<string> {
+    if (this.erc721Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return this.erc721Standard.getAssetSymbol(address);
   }
 
   /**
-   * Query for symbol for a given asset
+   * Query for owner for a given ERC721 asset.
    *
-   * @param address - ERC721 or ERC20 asset contract address
-   * @returns - Promise resolving to the 'symbol'
+   * @param address - ERC721 asset contract address.
+   * @param tokenId - ERC721 asset identifier.
+   * @returns Promise resolving to the owner address.
    */
-  async getAssetSymbol(address: string): Promise<string> {
-    const contract = this.web3.eth.contract(abiERC721).at(address);
-    return new Promise<string>((resolve, reject) => {
-      contract.symbol((error: Error, result: string) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(result);
-      });
-    });
+  async getERC721OwnerOf(address: string, tokenId: string): Promise<string> {
+    if (this.erc721Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return this.erc721Standard.getOwnerOf(address, tokenId);
   }
 
   /**
-   * Query for owner for a given ERC721 asset
+   * Query for tokenURI for a given asset.
    *
-   * @param address - ERC721 asset contract address
-   * @param tokenId - ERC721 asset identifier
-   * @returns - Promise resolving to the owner address
+   * @param address - ERC1155 asset contract address.
+   * @param tokenId - ERC1155 asset identifier.
+   * @returns Promise resolving to the 'tokenURI'.
    */
-  async getOwnerOf(address: string, tokenId: number): Promise<string> {
-    const contract = this.web3.eth.contract(abiERC721).at(address);
-    return new Promise<string>((resolve, reject) => {
-      contract.ownerOf(tokenId, (error: Error, result: string) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(result);
-      });
-    });
+  async getERC1155TokenURI(address: string, tokenId: string): Promise<string> {
+    if (this.erc1155Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return this.erc1155Standard.getTokenURI(address, tokenId);
   }
 
   /**
-   * Returns contract instance of
+   * Query for balance of a given ERC 1155 token.
    *
-   * @returns - Promise resolving to the 'tokenURI'
+   * @param userAddress - Wallet public address.
+   * @param collectibleAddress - ERC1155 asset contract address.
+   * @param collectibleId - ERC1155 asset identifier.
+   * @returns Promise resolving to the 'balanceOf'.
    */
-  async getBalancesInSingleCall(selectedAddress: string, tokensToDetect: string[]) {
-    const contract = this.web3.eth.contract(abiSingleCallBalancesContract).at(SINGLE_CALL_BALANCES_ADDRESS);
+  async getERC1155BalanceOf(
+    userAddress: string,
+    collectibleAddress: string,
+    collectibleId: string,
+  ): Promise<number> {
+    if (this.erc1155Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return await this.erc1155Standard.getBalanceOf(
+      collectibleAddress,
+      userAddress,
+      collectibleId,
+    );
+  }
+
+  /**
+   * Transfer single ERC1155 token.
+   *
+   * @param collectibleAddress - ERC1155 token address.
+   * @param senderAddress - ERC1155 token sender.
+   * @param recipientAddress - ERC1155 token recipient.
+   * @param collectibleId - ERC1155 token id.
+   * @param qty - Quantity of tokens to be sent.
+   * @returns Promise resolving to the 'transferSingle' ERC1155 token.
+   */
+  async transferSingleERC1155(
+    collectibleAddress: string,
+    senderAddress: string,
+    recipientAddress: string,
+    collectibleId: string,
+    qty: string,
+  ): Promise<void> {
+    if (this.erc1155Standard === undefined) {
+      throw new Error(MISSING_PROVIDER_ERROR);
+    }
+    return await this.erc1155Standard.transferSingle(
+      collectibleAddress,
+      senderAddress,
+      recipientAddress,
+      collectibleId,
+      qty,
+    );
+  }
+
+  /**
+   * Get the token balance for a list of token addresses in a single call. Only non-zero balances
+   * are returned.
+   *
+   * @param selectedAddress - The address to check token balances for.
+   * @param tokensToDetect - The token addresses to detect balances for.
+   * @returns The list of non-zero token balances.
+   */
+  async getBalancesInSingleCall(
+    selectedAddress: string,
+    tokensToDetect: string[],
+  ) {
+    const contract = this.web3.eth
+      .contract(abiSingleCallBalancesContract)
+      .at(SINGLE_CALL_BALANCES_ADDRESS);
     return new Promise<BalanceMap>((resolve, reject) => {
-      contract.balances([selectedAddress], tokensToDetect, (error: Error, result: typeof BN[]) => {
-        /* istanbul ignore if */
-        if (error) {
-          reject(error);
-          return;
-        }
-        const nonZeroBalances: BalanceMap = {};
-        /* istanbul ignore else */
-        if (result.length > 0) {
-          tokensToDetect.forEach((tokenAddress, index) => {
-            const balance: typeof BN = result[index];
-            /* istanbul ignore else */
-            if (!balance.isZero()) {
-              nonZeroBalances[tokenAddress] = balance;
-            }
-          });
-        }
-        resolve(nonZeroBalances);
-      });
+      contract.balances(
+        [selectedAddress],
+        tokensToDetect,
+        (error: Error, result: BN[]) => {
+          /* istanbul ignore if */
+          if (error) {
+            reject(error);
+            return;
+          }
+          const nonZeroBalances: BalanceMap = {};
+          /* istanbul ignore else */
+          if (result.length > 0) {
+            tokensToDetect.forEach((tokenAddress, index) => {
+              const balance: BN = result[index];
+              /* istanbul ignore else */
+              if (!balance.isZero()) {
+                nonZeroBalances[tokenAddress] = balance;
+              }
+            });
+          }
+          resolve(nonZeroBalances);
+        },
+      );
     });
   }
 }

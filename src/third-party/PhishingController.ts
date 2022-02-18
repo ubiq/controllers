@@ -1,15 +1,14 @@
-import BaseController, { BaseConfig, BaseState } from '../BaseController';
+import { toASCII } from 'punycode/';
+import DEFAULT_PHISHING_RESPONSE from 'eth-phishing-detect/src/config.json';
+import PhishingDetector from 'eth-phishing-detect/src/detector';
+import { BaseController, BaseConfig, BaseState } from '../BaseController';
 import { safelyExecute } from '../util';
-
-const DEFAULT_PHISHING_RESPONSE = require('eth-phishing-detect/src/config.json');
-const PhishingDetector = require('eth-phishing-detect/src/detector');
 
 /**
  * @type EthPhishingResponse
  *
  * Configuration response from the eth-phishing-detect package
  * consisting of approved and unapproved website origins
- *
  * @property blacklist - List of unapproved origins
  * @property fuzzylist - List of fuzzy-matched unapproved origins
  * @property tolerance - Fuzzy match tolerance level
@@ -28,7 +27,6 @@ export interface EthPhishingResponse {
  * @type PhishingConfig
  *
  * Phishing controller configuration
- *
  * @property interval - Polling interval used to fetch new block / approve lists
  */
 export interface PhishingConfig extends BaseConfig {
@@ -39,7 +37,6 @@ export interface PhishingConfig extends BaseConfig {
  * @type PhishingState
  *
  * Phishing controller state
- *
  * @property phishing - eth-phishing-detect configuration
  * @property whitelist - array of temporarily-approved origins
  */
@@ -51,8 +48,12 @@ export interface PhishingState extends BaseState {
 /**
  * Controller that passively polls on a set interval for approved and unapproved website origins
  */
-export class PhishingController extends BaseController<PhishingConfig, PhishingState> {
-  private configUrl = 'https://cdn.jsdelivr.net/gh/MetaMask/eth-phishing-detect@master/src/config.json';
+export class PhishingController extends BaseController<
+  PhishingConfig,
+  PhishingState
+> {
+  private configUrl =
+    'https://cdn.jsdelivr.net/gh/MetaMask/eth-phishing-detect@master/src/config.json';
 
   private detector: any;
 
@@ -64,12 +65,15 @@ export class PhishingController extends BaseController<PhishingConfig, PhishingS
   name = 'PhishingController';
 
   /**
-   * Creates a PhishingController instance
+   * Creates a PhishingController instance.
    *
-   * @param config - Initial options used to configure this controller
-   * @param state - Initial state to set on this controller
+   * @param config - Initial options used to configure this controller.
+   * @param state - Initial state to set on this controller.
    */
-  constructor(config?: Partial<PhishingConfig>, state?: Partial<PhishingState>) {
+  constructor(
+    config?: Partial<PhishingConfig>,
+    state?: Partial<PhishingState>,
+  ) {
     super(config, state);
     this.defaultConfig = { interval: 60 * 60 * 1000 };
     this.defaultState = {
@@ -82,9 +86,9 @@ export class PhishingController extends BaseController<PhishingConfig, PhishingS
   }
 
   /**
-   * Starts a new polling interval
+   * Starts a new polling interval.
    *
-   * @param interval - Polling interval used to fetch new approval lists
+   * @param interval - Polling interval used to fetch new approval lists.
    */
   async poll(interval?: number): Promise<void> {
     interval && this.configure({ interval }, false, false);
@@ -96,33 +100,35 @@ export class PhishingController extends BaseController<PhishingConfig, PhishingS
   }
 
   /**
-   * Determines if a given origin is unapproved
+   * Determines if a given origin is unapproved.
    *
-   * @param origin - Domain origin of a website
-   * @returns - True if the origin is an unapproved origin
+   * @param origin - Domain origin of a website.
+   * @returns Whether the origin is an unapproved origin.
    */
   test(origin: string): boolean {
-    if (this.state.whitelist.indexOf(origin) !== -1) {
+    const punycodeOrigin = toASCII(origin);
+    if (this.state.whitelist.indexOf(punycodeOrigin) !== -1) {
       return false;
     }
-    return this.detector.check(origin).result;
+    return this.detector.check(punycodeOrigin).result;
   }
 
   /**
-   * Temporarily marks a given origin as approved
+   * Temporarily marks a given origin as approved.
+   *
+   * @param origin - The origin to mark as approved.
    */
   bypass(origin: string) {
+    const punycodeOrigin = toASCII(origin);
     const { whitelist } = this.state;
-    if (whitelist.indexOf(origin) !== -1) {
+    if (whitelist.indexOf(punycodeOrigin) !== -1) {
       return;
     }
-    this.update({ whitelist: [...whitelist, origin] });
+    this.update({ whitelist: [...whitelist, punycodeOrigin] });
   }
 
   /**
-   * Updates lists of approved and unapproved website origins
-   *
-   * @returns Promise resolving when this operation completes
+   * Updates lists of approved and unapproved website origins.
    */
   async updatePhishingLists() {
     if (this.disabled) {
@@ -138,7 +144,9 @@ export class PhishingController extends BaseController<PhishingConfig, PhishingS
     }
   }
 
-  private async queryConfig(input: RequestInfo): Promise<EthPhishingResponse | null> {
+  private async queryConfig(
+    input: RequestInfo,
+  ): Promise<EthPhishingResponse | null> {
     const response = await fetch(input, { cache: 'no-cache' });
 
     switch (response.status) {
@@ -149,8 +157,11 @@ export class PhishingController extends BaseController<PhishingConfig, PhishingS
       case 403: {
         return null;
       }
+
       default: {
-        throw new Error(`Fetch failed with status '${response.status}' for request '${input}'`);
+        throw new Error(
+          `Fetch failed with status '${response.status}' for request '${input}'`,
+        );
       }
     }
   }

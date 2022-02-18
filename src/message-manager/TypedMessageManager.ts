@@ -1,19 +1,21 @@
-import { validateTypedSignMessageDataV3, validateTypedSignMessageDataV1 } from '../util';
-import AbstractMessageManager, {
+import { v1 as random } from 'uuid';
+import {
+  validateTypedSignMessageDataV3,
+  validateTypedSignMessageDataV1,
+} from '../util';
+import {
+  AbstractMessageManager,
   AbstractMessage,
   AbstractMessageParams,
   AbstractMessageParamsMetamask,
   OriginalRequest,
 } from './AbstractMessageManager';
 
-const random = require('uuid/v1');
-
 /**
  * @type TypedMessage
  *
  * Represents and contains data about an 'eth_signTypedData' type signature request.
  * These are created when a signature for an eth_signTypedData call is requested.
- *
  * @property id - An id to track and identify the message object
  * @property error - Error corresponding to eth_signTypedData error in failure case
  * @property messageParams - The parameters to pass to the eth_signTypedData method once
@@ -35,7 +37,6 @@ export interface TypedMessage extends AbstractMessage {
  * @type TypedMessageParams
  *
  * Represents the parameters to pass to the eth_signTypedData method once the signature request is approved.
- *
  * @property data - A hex string conversion of the raw buffer or an object containing data of the signature
  * request depending on version
  * @property from - Address to sign this message from
@@ -50,7 +51,6 @@ export interface TypedMessageParams extends AbstractMessageParams {
  *
  * Represents the parameters to pass to the eth_signTypedData method once the signature request is approved
  * plus data added by MetaMask.
- *
  * @property metamaskId - Added for tracking and identification within MetaMask
  * @property data - A hex string conversion of the raw buffer or an object containing data of the signature
  * request depending on version
@@ -59,7 +59,8 @@ export interface TypedMessageParams extends AbstractMessageParams {
  * @property origin? - Added for request origin identification
  * @property version - Compatibility version EIP712
  */
-export interface TypedMessageParamsMetamask extends AbstractMessageParamsMetamask {
+export interface TypedMessageParamsMetamask
+  extends AbstractMessageParamsMetamask {
   data: Record<string, unknown>[] | string;
   metamaskId?: string;
   error?: string;
@@ -80,18 +81,13 @@ export class TypedMessageManager extends AbstractMessageManager<
   name = 'TypedMessageManager';
 
   /**
-   * List of required sibling controllers this controller needs to function
-   */
-  requiredControllers = ['NetworkController'];
-
-  /**
    * Creates a new TypedMessage with an 'unapproved' status using the passed messageParams.
    * this.addMessage is called to add the new TypedMessage to this.messages, and to save the unapproved TypedMessages.
    *
-   * @param messageParams - The params for the eth_signTypedData call to be made after the message is approved
-   * @param version - Compatibility version EIP712
-   * @param req? - The original request object possibly containing the origin
-   * @returns - Promise resolving to the raw data of the signature request
+   * @param messageParams - The params for the eth_signTypedData call to be made after the message is approved.
+   * @param version - Compatibility version EIP712.
+   * @param req - The original request object possibly containing the origin.
+   * @returns Promise resolving to the raw data of the signature request.
    */
   addUnapprovedMessageAsync(
     messageParams: TypedMessageParams,
@@ -102,6 +98,7 @@ export class TypedMessageManager extends AbstractMessageManager<
       if (version === 'V1') {
         validateTypedSignMessageDataV1(messageParams);
       }
+
       if (version === 'V3') {
         validateTypedSignMessageDataV3(messageParams);
       }
@@ -109,14 +106,24 @@ export class TypedMessageManager extends AbstractMessageManager<
       this.hub.once(`${messageId}:finished`, (data: TypedMessage) => {
         switch (data.status) {
           case 'signed':
-            return resolve(data.rawSig);
+            return resolve(data.rawSig as string);
           case 'rejected':
-            return reject(new Error('MetaMask Typed Message Signature: User denied message signature.'));
+            return reject(
+              new Error(
+                'MetaMask Typed Message Signature: User denied message signature.',
+              ),
+            );
           case 'errored':
-            return reject(new Error(`MetaMask Typed Message Signature: ${data.error}`));
+            return reject(
+              new Error(`MetaMask Typed Message Signature: ${data.error}`),
+            );
           default:
             return reject(
-              new Error(`MetaMask Typed Message Signature: Unknown problem: ${JSON.stringify(messageParams)}`),
+              new Error(
+                `MetaMask Typed Message Signature: Unknown problem: ${JSON.stringify(
+                  messageParams,
+                )}`,
+              ),
             );
         }
       });
@@ -129,14 +136,22 @@ export class TypedMessageManager extends AbstractMessageManager<
    * unapproved TypedMessages.
    *
    * @param messageParams - The params for the 'eth_signTypedData' call to be made after the message
-   * is approved
-   * @param version - Compatibility version EIP712
-   * @param req? - The original request object possibly containing the origin
-   * @returns - The id of the newly created TypedMessage
+   * is approved.
+   * @param version - Compatibility version EIP712.
+   * @param req - The original request object possibly containing the origin.
+   * @returns The id of the newly created TypedMessage.
    */
-  addUnapprovedMessage(messageParams: TypedMessageParams, version: string, req?: OriginalRequest) {
+  addUnapprovedMessage(
+    messageParams: TypedMessageParams,
+    version: string,
+    req?: OriginalRequest,
+  ) {
     const messageId = random();
-    const messageParamsMetamask = { ...messageParams, metamaskId: messageId, version };
+    const messageParamsMetamask = {
+      ...messageParams,
+      metamaskId: messageId,
+      version,
+    };
     if (req) {
       messageParams.origin = req.origin;
     }
@@ -155,8 +170,8 @@ export class TypedMessageManager extends AbstractMessageManager<
   /**
    * Sets a TypedMessage status to 'errored' via a call to this.setMessageStatus.
    *
-   * @param messageId - The id of the TypedMessage to error
-   * @param error - The error to be included in TypedMessage
+   * @param messageId - The id of the TypedMessage to error.
+   * @param error - The error to be included in TypedMessage.
    */
   setMessageStatusErrored(messageId: string, error: string) {
     const message = this.getMessage(messageId);
@@ -171,12 +186,14 @@ export class TypedMessageManager extends AbstractMessageManager<
 
   /**
    * Removes the metamaskId and version properties from passed messageParams and returns a promise which
-   * resolves the updated messageParams
+   * resolves the updated messageParams.
    *
-   * @param messageParams - The messageParams to modify
-   * @returns - Promise resolving to the messageParams with the metamaskId and version properties removed
+   * @param messageParams - The messageParams to modify.
+   * @returns Promise resolving to the messageParams with the metamaskId and version properties removed.
    */
-  prepMessageForSigning(messageParams: TypedMessageParamsMetamask): Promise<TypedMessageParams> {
+  prepMessageForSigning(
+    messageParams: TypedMessageParamsMetamask,
+  ): Promise<TypedMessageParams> {
     delete messageParams.metamaskId;
     delete messageParams.version;
     return Promise.resolve(messageParams);

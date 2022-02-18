@@ -1,12 +1,14 @@
-import { isValidAddress, toChecksumAddress } from 'ethereumjs-util';
-import BaseController, { BaseConfig, BaseState } from '../BaseController';
-import { normalizeEnsName } from '../util';
+import { BaseController, BaseConfig, BaseState } from '../BaseController';
+import {
+  normalizeEnsName,
+  isValidHexAddress,
+  toChecksumHexAddress,
+} from '../util';
 
 /**
  * @type EnsEntry
  *
  * ENS entry representation
- *
  * @property chainId - Id of the associated chain
  * @property ensName - The ENS name
  * @property address - Hex address with the ENS name, or null
@@ -21,7 +23,6 @@ export interface EnsEntry {
  * @type EnsState
  *
  * ENS controller state
- *
  * @property ensEntries - Object of ENS entry objects
  */
 export interface EnsState extends BaseState {
@@ -39,10 +40,10 @@ export class EnsController extends BaseController<BaseConfig, EnsState> {
   name = 'EnsController';
 
   /**
-   * Creates an EnsController instance
+   * Creates an EnsController instance.
    *
-   * @param config - Initial options used to configure this controller
-   * @param state - Initial state to set on this controller
+   * @param config - Initial options used to configure this controller.
+   * @param state - Initial state to set on this controller.
    */
   constructor(config?: Partial<BaseConfig>, state?: Partial<EnsState>) {
     super(config, state);
@@ -53,7 +54,7 @@ export class EnsController extends BaseController<BaseConfig, EnsState> {
   }
 
   /**
-   * Remove all chain Ids and ENS entries from state
+   * Remove all chain Ids and ENS entries from state.
    */
   clear() {
     this.update({ ensEntries: {} });
@@ -62,14 +63,17 @@ export class EnsController extends BaseController<BaseConfig, EnsState> {
   /**
    * Delete an ENS entry.
    *
-   * @param chainId - Parent chain of the ENS entry to delete
-   * @param ensName - Name of the ENS entry to delete
-   *
-   * @returns - Boolean indicating if the entry was deleted
+   * @param chainId - Parent chain of the ENS entry to delete.
+   * @param ensName - Name of the ENS entry to delete.
+   * @returns Boolean indicating if the entry was deleted.
    */
   delete(chainId: string, ensName: string): boolean {
     const normalizedEnsName = normalizeEnsName(ensName);
-    if (!normalizedEnsName || !this.state.ensEntries[chainId] || !this.state.ensEntries[chainId][normalizedEnsName]) {
+    if (
+      !normalizedEnsName ||
+      !this.state.ensEntries[chainId] ||
+      !this.state.ensEntries[chainId][normalizedEnsName]
+    ) {
       return false;
     }
 
@@ -87,10 +91,9 @@ export class EnsController extends BaseController<BaseConfig, EnsState> {
   /**
    * Retrieve a DNS entry.
    *
-   * @param chainId - Parent chain of the ENS entry to retrieve
-   * @param ensName - Name of the ENS entry to retrieve
-   *
-   * @returns - The EnsEntry or null if it does not exist
+   * @param chainId - Parent chain of the ENS entry to retrieve.
+   * @param ensName - Name of the ENS entry to retrieve.
+   * @returns The EnsEntry or null if it does not exist.
    */
   get(chainId: string, ensName: string): EnsEntry | null {
     const normalizedEnsName = normalizeEnsName(ensName);
@@ -107,20 +110,21 @@ export class EnsController extends BaseController<BaseConfig, EnsState> {
    *
    * A null address indicates that the ENS name does not resolve.
    *
-   * @param chainId - Id of the associated chain
-   * @param ensName - The ENS name
-   * @param address - Associated address (or null) to add or update
-   *
-   * @returns - Boolean indicating if the entry was set
+   * @param chainId - Id of the associated chain.
+   * @param ensName - The ENS name.
+   * @param address - Associated address (or null) to add or update.
+   * @returns Boolean indicating if the entry was set.
    */
   set(chainId: string, ensName: string, address: string | null): boolean {
     if (
       !Number.isInteger(Number.parseInt(chainId, 10)) ||
       !ensName ||
       typeof ensName !== 'string' ||
-      (address && !isValidAddress(address))
+      (address && !isValidHexAddress(address))
     ) {
-      throw new Error(`Invalid ENS entry: { chainId:${chainId}, ensName:${ensName}, address:${address}}`);
+      throw new Error(
+        `Invalid ENS entry: { chainId:${chainId}, ensName:${ensName}, address:${address}}`,
+      );
     }
 
     const normalizedEnsName = normalizeEnsName(ensName);
@@ -128,10 +132,13 @@ export class EnsController extends BaseController<BaseConfig, EnsState> {
       throw new Error(`Invalid ENS name: ${ensName}`);
     }
 
-    const normalizedAddress = address ? toChecksumAddress(address) : null;
+    const normalizedAddress = address ? toChecksumHexAddress(address) : null;
     const subState = this.state.ensEntries[chainId];
 
-    if (subState && subState[normalizedEnsName] && subState[normalizedEnsName].address === normalizedAddress) {
+    if (
+      subState?.[normalizedEnsName] &&
+      subState[normalizedEnsName].address === normalizedAddress
+    ) {
       return false;
     }
 

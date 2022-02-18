@@ -1,5 +1,3 @@
-import { ChildControllerContext } from './ComposableController';
-
 /**
  * State change callbacks
  */
@@ -9,7 +7,6 @@ export type Listener<T> = (state: T) => void;
  * @type BaseConfig
  *
  * Base controller configuration
- *
  * @property disabled - Determines if this controller is enabled
  */
 export interface BaseConfig {
@@ -20,7 +17,6 @@ export interface BaseConfig {
  * @type BaseState
  *
  * Base state representation
- *
  * @property name - Unique name for this controller
  */
 export interface BaseState {
@@ -31,13 +27,6 @@ export interface BaseState {
  * Controller class that provides configuration, state management, and subscriptions
  */
 export class BaseController<C extends BaseConfig, S extends BaseState> {
-  /**
-   * Map of all sibling child controllers keyed by name if this
-   * controller is composed using a ComposableController, allowing
-   * any API on any sibling controller to be accessed
-   */
-  context: ChildControllerContext = {};
-
   /**
    * Default options used to configure this controller
    */
@@ -58,11 +47,6 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
    */
   name = 'BaseController';
 
-  /**
-   * List of required sibling controllers this controller needs to function
-   */
-  requiredControllers: string[] = [];
-
   private readonly initialConfig: C;
 
   private readonly initialState: S;
@@ -77,8 +61,8 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
    * Creates a BaseController instance. Both initial state and initial
    * configuration options are merged with defaults upon initialization.
    *
-   * @param config - Initial options used to configure this controller
-   * @param state - Initial state to set on this controller
+   * @param config - Initial options used to configure this controller.
+   * @param state - Initial state to set on this controller.
    */
   constructor(config: Partial<C> = {} as C, state: Partial<S> = {} as S) {
     // Use assign since generics can't be spread: https://git.io/vpRhY
@@ -91,7 +75,7 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
    * variable on this instance and triggers any defined setters. This
    * also sets initial state and triggers any listeners.
    *
-   * @returns - This controller instance
+   * @returns This controller instance.
    */
   protected initialize() {
     this.internalState = this.defaultState;
@@ -102,33 +86,35 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
   }
 
   /**
-   * Retrieves current controller configuration options
+   * Retrieves current controller configuration options.
    *
-   * @returns - Current configuration
+   * @returns The current configuration.
    */
   get config() {
     return this.internalConfig;
   }
 
   /**
-   * Retrieves current controller state
+   * Retrieves current controller state.
    *
-   * @returns - Current state
+   * @returns The current state.
    */
   get state() {
     return this.internalState;
   }
 
   /**
-   * Updates controller configuration
+   * Updates controller configuration.
    *
-   * @param config - New configuration options
-   * @param overwrite - Overwrite config instead of merging
-   * @param fullUpdate - Boolean that defines if the update is partial or not
+   * @param config - New configuration options.
+   * @param overwrite - Overwrite config instead of merging.
+   * @param fullUpdate - Boolean that defines if the update is partial or not.
    */
   configure(config: Partial<C>, overwrite = false, fullUpdate = true) {
     if (fullUpdate) {
-      this.internalConfig = overwrite ? (config as C) : Object.assign(this.internalConfig, config);
+      this.internalConfig = overwrite
+        ? (config as C)
+        : Object.assign(this.internalConfig, config);
 
       for (const key in this.internalConfig) {
         if (typeof this.internalConfig[key] !== 'undefined') {
@@ -147,43 +133,32 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
   }
 
   /**
-   * Notifies all subscribed listeners of current state
+   * Notifies all subscribed listeners of current state.
    */
   notify() {
     if (this.disabled) {
       return;
     }
+
     this.internalListeners.forEach((listener) => {
       listener(this.internalState);
     });
   }
 
   /**
-   * Extension point called if and when this controller is composed
-   * with other controllers using a ComposableController
-   */
-  onComposed() {
-    this.requiredControllers.forEach((name) => {
-      if (!this.context[name]) {
-        throw new Error(`${this.name} must be composed with ${name}.`);
-      }
-    });
-  }
-
-  /**
-   * Adds new listener to be notified of state changes
+   * Adds new listener to be notified of state changes.
    *
-   * @param listener - Callback triggered when state changes
+   * @param listener - The callback triggered when state changes.
    */
   subscribe(listener: Listener<S>) {
     this.internalListeners.push(listener);
   }
 
   /**
-   * Removes existing listener from receiving state changes
+   * Removes existing listener from receiving state changes.
    *
-   * @param listener - Callback to remove
-   * @returns - True if a listener is found and unsubscribed
+   * @param listener - The callback to remove.
+   * @returns `true` if a listener is found and unsubscribed.
    */
   unsubscribe(listener: Listener<S>) {
     const index = this.internalListeners.findIndex((cb) => listener === cb);
@@ -192,13 +167,15 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
   }
 
   /**
-   * Updates controller state
+   * Updates controller state.
    *
-   * @param state - New state
-   * @param overwrite - Overwrite state instead of merging
+   * @param state - The new state.
+   * @param overwrite - Overwrite state instead of merging.
    */
   update(state: Partial<S>, overwrite = false) {
-    this.internalState = overwrite ? Object.assign({}, state as S) : Object.assign({}, this.internalState, state);
+    this.internalState = overwrite
+      ? Object.assign({}, state as S)
+      : Object.assign({}, this.internalState, state);
     this.notify();
   }
 }
