@@ -8,7 +8,7 @@ on:
 jobs:
   build-lint-test:
     name: Build, Lint, and Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         # TODO: Test on more recent LTS versions
@@ -35,15 +35,9 @@ jobs:
       - run: yarn build
       - run: yarn lint
       - run: yarn test --maxWorkers=1
-      - name: Validate RC changelog
-        if: ${{ startsWith(github.ref, 'release/') }}
-        run: yarn auto-changelog validate --rc
-      - name: Validate changelog
-        if: ${{ !startsWith(github.ref, 'release/') }}
-        run: yarn auto-changelog validate
   all-jobs-pass:
     name: All jobs pass
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs:
       - build-lint-test
     steps:
