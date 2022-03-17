@@ -7708,10 +7708,10 @@ typescript@~4.2.2:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.2.2.tgz#1450f020618f872db0ea17317d16d8da8ddb8c4c"
   integrity sha512-tbb+NVrLfnsJy3M59lsDgrzWIflR4d4TIUjz+heUnHZwdF7YsrMTKoRERiIvI2lvBG95dfpLxB21WZhys1bgaQ==
 
-ubq-contract-metadata@^1.33.0:
-  version "1.33.0"
-  resolved "https://registry.yarnpkg.com/ubq-contract-metadata/-/ubq-contract-metadata-1.33.0.tgz#0096b872b479af0c8e846b9d7ba382ab1a9523b7"
-  integrity sha512-gveUiJFilAje3PfhbKpfwOfUI/NPKN1WNVk4ur+WMkyNL2iOw6vqaJaA71cJhWPMQ2m93gRrdlnP4pdkbYD57Q==
+ubq-contract-metadata@^1.33.1:
+  version "1.33.1"
+  resolved "https://registry.yarnpkg.com/ubq-contract-metadata/-/ubq-contract-metadata-1.33.1.tgz#0b3974be3aae9f61a9fb76b413928f13c31b8a57"
+  integrity sha512-cQfGKUyW2gAS8vol91k3UvzXPos58EGjwwawnOCgLRCHnJ53EGeekSvDZ1xhAtc1YbAmJmRKFwQSTMmOcz0vGg==
 
 uglify-js@^3.1.4:
   version "3.6.5"

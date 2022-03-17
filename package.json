@@ -1,6 +1,6 @@
 {
   "name": "sparrow-controllers",
-  "version": "27.0.2",
+  "version": "27.0.3",
   "description": "Collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets",
   "keywords": [
     "Sparrow",
@@ -65,7 +65,7 @@
     "nanoid": "^3.1.31",
     "punycode": "^2.1.1",
     "single-call-balance-checker-abi": "^1.0.0",
-    "ubq-contract-metadata": "^1.33.0",
+    "ubq-contract-metadata": "^1.33.1",
     "uuid": "^8.3.2",
     "web3": "^0.20.7",
     "web3-provider-engine": "^16.0.3"

@@ -1,9 +1,6 @@
 import { stub } from 'sinon';
 import nock from 'nock';
-import { PreferencesController } from '../user/PreferencesController';
-import { NetworkController } from '../network/NetworkController';
 import { TokenRatesController } from './TokenRatesController';
-import { TokensController } from './TokensController';
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const COINGECKO_ETH_PATH = '/simple/token_price/ethereum';
@@ -198,38 +195,6 @@ describe('TokenRatesController', () => {
         resolve();
       }, 100);
     });
-  });
-
-  it('should update all rates', async () => {
-    const network = new NetworkController();
-    const preferences = new PreferencesController();
-    const tokensController = new TokensController({
-      onPreferencesStateChange: (listener) => preferences.subscribe(listener),
-      onNetworkStateChange: (listener) => network.subscribe(listener),
-    });
-    const controller = new TokenRatesController(
-      {
-        onTokensStateChange: (listener) => tokensController.subscribe(listener),
-        onCurrencyRateStateChange: stub(),
-        onNetworkStateChange: (listener) => network.subscribe(listener),
-      },
-      { interval: 10, chainId: '1' },
-    );
-    const address = '0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359';
-    expect(controller.state.contractExchangeRates).toStrictEqual({});
-    controller.tokens = [
-      { address, decimals: 18, symbol: 'DAI' },
-      { address: ADDRESS, decimals: 0, symbol: '' },
-    ];
-    await controller.updateExchangeRates();
-    expect(Object.keys(controller.state.contractExchangeRates)).toContain(
-      address,
-    );
-    expect(controller.state.contractExchangeRates[address]).toBeGreaterThan(0);
-    expect(Object.keys(controller.state.contractExchangeRates)).toContain(
-      ADDRESS,
-    );
-    expect(controller.state.contractExchangeRates[ADDRESS]).toStrictEqual(0);
   });
 
   it('should handle balance not found in API', async () => {
