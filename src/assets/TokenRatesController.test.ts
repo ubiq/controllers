@@ -1,4 +1,4 @@
-import { stub } from 'sinon';
+import sinon from 'sinon';
 import nock from 'nock';
 import { TokenRatesController } from './TokenRatesController';
 
@@ -95,13 +95,14 @@ describe('TokenRatesController', () => {
 
   afterEach(() => {
     nock.cleanAll();
+    sinon.restore();
   });
 
   it('should set default state', () => {
     const controller = new TokenRatesController({
-      onTokensStateChange: stub(),
-      onCurrencyRateStateChange: stub(),
-      onNetworkStateChange: stub(),
+      onTokensStateChange: sinon.stub(),
+      onCurrencyRateStateChange: sinon.stub(),
+      onNetworkStateChange: sinon.stub(),
     });
     expect(controller.state).toStrictEqual({
       contractExchangeRates: {},
@@ -110,9 +111,9 @@ describe('TokenRatesController', () => {
 
   it('should initialize with the default config', () => {
     const controller = new TokenRatesController({
-      onTokensStateChange: stub(),
-      onCurrencyRateStateChange: stub(),
-      onNetworkStateChange: stub(),
+      onTokensStateChange: sinon.stub(),
+      onCurrencyRateStateChange: sinon.stub(),
+      onNetworkStateChange: sinon.stub(),
     });
     expect(controller.config).toStrictEqual({
       disabled: false,
@@ -126,9 +127,9 @@ describe('TokenRatesController', () => {
 
   it('should throw when tokens property is accessed', () => {
     const controller = new TokenRatesController({
-      onTokensStateChange: stub(),
-      onCurrencyRateStateChange: stub(),
-      onNetworkStateChange: stub(),
+      onTokensStateChange: sinon.stub(),
+      onCurrencyRateStateChange: sinon.stub(),
+      onNetworkStateChange: sinon.stub(),
     });
     expect(() => console.log(controller.tokens)).toThrow(
       'Property only used for setting',
@@ -163,27 +164,27 @@ describe('TokenRatesController', () => {
   it('should not update rates if disabled', async () => {
     const controller = new TokenRatesController(
       {
-        onTokensStateChange: stub(),
-        onCurrencyRateStateChange: stub(),
-        onNetworkStateChange: stub(),
+        onTokensStateChange: sinon.stub(),
+        onCurrencyRateStateChange: sinon.stub(),
+        onNetworkStateChange: sinon.stub(),
       },
       {
         interval: 10,
       },
     );
-    controller.fetchExchangeRate = stub();
+    controller.fetchExchangeRate = sinon.stub();
     controller.disabled = true;
     await controller.updateExchangeRates();
     expect((controller.fetchExchangeRate as any).called).toBe(false);
   });
 
   it('should clear previous interval', async () => {
-    const mock = stub(global, 'clearTimeout');
+    const mock = sinon.stub(global, 'clearTimeout');
     const controller = new TokenRatesController(
       {
-        onTokensStateChange: stub(),
-        onCurrencyRateStateChange: stub(),
-        onNetworkStateChange: stub(),
+        onTokensStateChange: sinon.stub(),
+        onCurrencyRateStateChange: sinon.stub(),
+        onNetworkStateChange: sinon.stub(),
       },
       { interval: 1337 },
     );
@@ -191,7 +192,6 @@ describe('TokenRatesController', () => {
       setTimeout(() => {
         controller.poll(1338);
         expect(mock.called).toBe(true);
-        mock.restore();
         resolve();
       }, 100);
     });
@@ -200,30 +200,30 @@ describe('TokenRatesController', () => {
   it('should handle balance not found in API', async () => {
     const controller = new TokenRatesController(
       {
-        onTokensStateChange: stub(),
-        onCurrencyRateStateChange: stub(),
-        onNetworkStateChange: stub(),
+        onTokensStateChange: sinon.stub(),
+        onCurrencyRateStateChange: sinon.stub(),
+        onNetworkStateChange: sinon.stub(),
       },
       { interval: 10 },
     );
-    stub(controller, 'fetchExchangeRate').throws({
+    sinon.stub(controller, 'fetchExchangeRate').throws({
       error: 'Not Found',
       message: 'Not Found',
     });
     expect(controller.state.contractExchangeRates).toStrictEqual({});
     controller.tokens = [{ address: 'bar', decimals: 0, symbol: '' }];
-    const mock = stub(controller, 'updateExchangeRates');
+    const mock = sinon.stub(controller, 'updateExchangeRates');
     await controller.updateExchangeRates();
     expect(mock).not.toThrow();
   });
 
   it('should update exchange rates when tokens change', async () => {
     let tokenStateChangeListener: (state: any) => void;
-    const onTokensStateChange = stub().callsFake((listener) => {
+    const onTokensStateChange = sinon.stub().callsFake((listener) => {
       tokenStateChangeListener = listener;
     });
-    const onCurrencyRateStateChange = stub();
-    const onNetworkStateChange = stub();
+    const onCurrencyRateStateChange = sinon.stub();
+    const onNetworkStateChange = sinon.stub();
     const controller = new TokenRatesController(
       {
         onTokensStateChange,
@@ -233,7 +233,10 @@ describe('TokenRatesController', () => {
       { interval: 10 },
     );
 
-    const updateExchangeRatesStub = stub(controller, 'updateExchangeRates');
+    const updateExchangeRatesStub = sinon.stub(
+      controller,
+      'updateExchangeRates',
+    );
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     tokenStateChangeListener!({ tokens: [] });
     // FIXME: This is now being called twice
@@ -242,11 +245,11 @@ describe('TokenRatesController', () => {
 
   it('should update exchange rates when native currency changes', async () => {
     let currencyRateStateChangeListener: (state: any) => void;
-    const onTokensStateChange = stub();
-    const onCurrencyRateStateChange = stub().callsFake((listener) => {
+    const onTokensStateChange = sinon.stub();
+    const onCurrencyRateStateChange = sinon.stub().callsFake((listener) => {
       currencyRateStateChangeListener = listener;
     });
-    const onNetworkStateChange = stub();
+    const onNetworkStateChange = sinon.stub();
     const controller = new TokenRatesController(
       {
         onTokensStateChange,
@@ -256,7 +259,10 @@ describe('TokenRatesController', () => {
       { interval: 10 },
     );
 
-    const updateExchangeRatesStub = stub(controller, 'updateExchangeRates');
+    const updateExchangeRatesStub = sinon.stub(
+      controller,
+      'updateExchangeRates',
+    );
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     currencyRateStateChangeListener!({ nativeCurrency: 'dai' });
     // FIXME: This is now being called twice
@@ -288,15 +294,15 @@ describe('TokenRatesController', () => {
     };
 
     let tokenStateChangeListener: (state: any) => void;
-    const onTokensStateChange = stub().callsFake((listener) => {
+    const onTokensStateChange = sinon.stub().callsFake((listener) => {
       tokenStateChangeListener = listener;
     });
 
-    const onNetworkStateChange = stub();
+    const onNetworkStateChange = sinon.stub();
     const controller = new TokenRatesController(
       {
         onTokensStateChange,
-        onCurrencyRateStateChange: stub(),
+        onCurrencyRateStateChange: sinon.stub(),
         onNetworkStateChange,
       },
       { interval: 10 },
@@ -345,12 +351,12 @@ describe('TokenRatesController', () => {
       .persist();
 
     let networkChangeListener: (state: any) => void;
-    const onNetworkStateChange = stub().callsFake((listener) => {
+    const onNetworkStateChange = sinon.stub().callsFake((listener) => {
       networkChangeListener = listener;
     });
 
     let tokenStateChangeListener: (state: any) => void;
-    const onTokensStateChange = stub().callsFake((listener) => {
+    const onTokensStateChange = sinon.stub().callsFake((listener) => {
       tokenStateChangeListener = listener;
     });
 
@@ -358,7 +364,7 @@ describe('TokenRatesController', () => {
       {
         onTokensStateChange,
         onNetworkStateChange,
-        onCurrencyRateStateChange: stub(),
+        onCurrencyRateStateChange: sinon.stub(),
       },
       { interval: 10 },
     );
